@@ -18,12 +18,10 @@ CREATE TABLE IF NOT EXISTS Guilds (
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS Users (
     user_id TEXT NOT NULL,
-    display_name TEXT NOT NULL,
-    message TEXT NOT NULL,
-    sobs INTEGER DEFAULT 0,
-    message_id TEXT NOT NULL,
+    sobs_given INTEGER DEFAULT 0,
+    sobs_received INTEGER DEFAULT 0,
     guild_id TEXT NOT NULL,
-    PRIMARY KEY (user_id, message_id),
+    PRIMARY KEY (user_id, guild_id),
     FOREIGN KEY (guild_id) REFERENCES Guilds(guild_id)
 )
 """)
@@ -41,36 +39,58 @@ async def on_reaction_add(reaction, user):
 
     if str(reaction.emoji) == "😭":
         guild_id = str(reaction.message.guild.id)
-        user_id = str(user.id)
-        display_name = str(user.display_name)
-        message_content = str(reaction.message.content)
-        message_id = str(reaction.message.id)
-
+        user_id = str(user.id) #user that reacted 
+        message_author_id = str(reaction.message.author.id) #message
         cursor.execute("""
         INSERT INTO Guilds (guild_id)
         VALUES (?)
         ON CONFLICT(guild_id) DO NOTHING
         """, (guild_id,))
-
         cursor.execute("""
-        INSERT INTO Users (user_id, display_name, message, sobs, message_id, guild_id)
-        VALUES (?, ?, ?, 1, ?, ?)
-        ON CONFLICT(user_id, message_id) DO UPDATE SET
-            sobs = sobs + 1
-        """, (user_id, display_name, message_content, message_id, guild_id))
+        INSERT INTO Users (user_id, sobs_given, sobs_received, guild_id)
+        VALUES (?, 1, 0, ?)
+        ON CONFLICT(user_id, guild_id) DO UPDATE SET
+            sobs_given = sobs_given + 1
+        """, (user_id, guild_id))
+        cursor.execute("""
+        INSERT INTO Users (user_id, sobs_given, sobs_received, guild_id)
+        VALUES (?, 0, 1, ?)
+        ON CONFLICT(user_id, guild_id) DO UPDATE SET
+            sobs_received = sobs_received + 1
+        """, (message_author_id, guild_id))
 
         conn.commit()
+
+@bot.event
+async def on_reaction_remove(reaction, user):
+    if user.bot:
+        return
+
+    if str(reaction.emoji) == "😭":
+        guild_id = str(reaction.message.guild.id)
+        user_id = str(user.id) #user that reacted 
+        message_author_id = str(reaction.message.author.id) #message
+        
+        cursor.execute("""
+        UPDATE Users
+        SET sobs_given = sobs_given - 1
+        WHERE user_id = ? AND guild_id = ?
+        """, (user_id, guild_id))
+        cursor.execute("""
+        UPDATE Users
+        SET sobs_received = sobs_received - 1
+        WHERE user_id = ? AND guild_id = ?
+        """, (message_author_id, guild_id))
+
+        conn.commit()
+
 
 @bot.event
 async def on_close():
     conn.close()
     print("Database connection closed.")
-
-#load commands
 for filename in os.listdir("./cogs"):
     if filename.endswith(".py") and not filename.startswith("__"):
         bot.load_extension(f"cogs.{filename[:-3]}")
 
-
-    
 bot.run(os.getenv('TOKEN'))
