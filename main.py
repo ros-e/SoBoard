@@ -29,8 +29,12 @@ conn.commit()
 
 @bot.event
 async def on_ready():
-    print(f"{bot.user} is ready and online!")
-    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="sobs"))
+    server_count = len(bot.guilds)
+    await bot.change_presence(activity=discord.Activity(
+        type=discord.ActivityType.watching, 
+        name=f"sobs in {server_count} servers"
+    ))
+    print(f"{bot.user} is ready and online in {server_count} servers!")
 
 @bot.event
 async def on_reaction_add(reaction, user):
