@@ -36,52 +36,61 @@ async def on_ready():
 async def on_reaction_add(reaction, user):
     if user.bot:
         return
-
+    if user.id == reaction.message.author.id:
+        return
+    
     if str(reaction.emoji) == "😭":
         guild_id = str(reaction.message.guild.id)
-        user_id = str(user.id) #user that reacted 
-        message_author_id = str(reaction.message.author.id) #message
+        user_id = str(user.id)  # user that reacted 
+        message_author_id = str(reaction.message.author.id)  # message author
+        
         cursor.execute("""
         INSERT INTO Guilds (guild_id)
         VALUES (?)
         ON CONFLICT(guild_id) DO NOTHING
         """, (guild_id,))
+        
         cursor.execute("""
         INSERT INTO Users (user_id, sobs_given, sobs_received, guild_id)
         VALUES (?, 1, 0, ?)
         ON CONFLICT(user_id, guild_id) DO UPDATE SET
             sobs_given = sobs_given + 1
         """, (user_id, guild_id))
+        
         cursor.execute("""
         INSERT INTO Users (user_id, sobs_given, sobs_received, guild_id)
         VALUES (?, 0, 1, ?)
         ON CONFLICT(user_id, guild_id) DO UPDATE SET
             sobs_received = sobs_received + 1
         """, (message_author_id, guild_id))
-
+        
         conn.commit()
 
 @bot.event
 async def on_reaction_remove(reaction, user):
     if user.bot:
         return
-
+    
+    if user.id == reaction.message.author.id:
+        return
+    
     if str(reaction.emoji) == "😭":
         guild_id = str(reaction.message.guild.id)
-        user_id = str(user.id) #user that reacted 
-        message_author_id = str(reaction.message.author.id) #message
+        user_id = str(user.id)  # user that reacted 
+        message_author_id = str(reaction.message.author.id)  # message author
         
         cursor.execute("""
         UPDATE Users
         SET sobs_given = sobs_given - 1
         WHERE user_id = ? AND guild_id = ?
         """, (user_id, guild_id))
+        
         cursor.execute("""
         UPDATE Users
         SET sobs_received = sobs_received - 1
         WHERE user_id = ? AND guild_id = ?
         """, (message_author_id, guild_id))
-
+        
         conn.commit()
 
 
