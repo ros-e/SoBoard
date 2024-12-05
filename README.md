@@ -1,7 +1,6 @@
-# SoBoard
 <img src="./.github/banner.png" />
 
-A free-opensource sob board for your discord server
+## A free-opensource sob board for your discord server
 
 ## Installation
 ```sh
