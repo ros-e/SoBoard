@@ -33,7 +33,7 @@ class Sobs(commands.Cog):
         )
         embed.add_field(name="Sobs Received", value=sobs_received, inline=False)
         embed.add_field(name="Sobs Given", value=sobs_given, inline=False)
-        embed.set_footer(text=f"support me on Github /links")
+        embed.set_footer(text="Want to support Soboard? Use /links")
         await ctx.respond(embed=embed)
 
 def setup(bot):
