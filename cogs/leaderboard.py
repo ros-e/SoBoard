@@ -37,7 +37,7 @@ class Leaderboard(commands.Cog):
             description=leaderboard_string,
             color=discord.Colour.yellow()
         )
-        embed.set_footer(text="Support me on GitHub /links")
+        embed.set_footer(text="Want to support Soboard? Use /links")
         await ctx.respond(embed=embed)
 
 def setup(bot):
